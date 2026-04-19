@@ -633,23 +633,58 @@ function closeShopBtn() {
   document.getElementById('shopModal').classList.remove('open');
 }
 
-function buyItem(type) {
+// ── STARS PAYMENTS ──
+var API_URL = 'https://sakura-pixels-m9ohkkf9g-crazy-beaver.vercel.app';
+
+async function buyItem(type) {
   hapticMedium();
-  if (!tg || !tg.openInvoice) {
-    // Dev mode fallback
-    if (type === 'lives') { lives = Math.min(lives + 5, 8); refreshLives(); showToast('❤️ +5 Lives added!'); }
-    else if (type === 'hint') { progress.hints += 3; saveProgress(); showToast('💡 3 Hints added!'); }
-    else if (type === 'moon') { if (progress.unlockedPacks.indexOf(2) === -1) progress.unlockedPacks.push(2); saveProgress(); showToast('🌙 Moon Palace unlocked!'); }
-    else if (type === 'magic') { if (progress.unlockedPacks.indexOf(3) === -1) progress.unlockedPacks.push(3); saveProgress(); showToast('🔮 Magic Realm unlocked!'); }
-    closeShopBtn();
-    return;
-  }
-  // Real Stars payment — you'd set up invoice links via BotFather / Payments API
-  // tg.openInvoice('YOUR_INVOICE_LINK_HERE', function(status) {
-  //   if (status === 'paid') { ... apply purchase ... }
-  // });
-  showToast('💫 Stars payment coming soon!');
   closeShopBtn();
+
+  var userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user)
+    ? tg.initDataUnsafe.user.id : 0;
+
+  try {
+    var res = await fetch(API_URL + '/api/invoice', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: type, user_id: userId }),
+    });
+    var data = await res.json();
+    if (!data.url) throw new Error(data.error || 'No URL');
+
+    tg.openInvoice(data.url, function(status) {
+      if (status === 'paid') {
+        applyPurchase(type);
+      } else if (status === 'cancelled') {
+        showToast('Payment cancelled');
+      } else if (status === 'failed') {
+        showToast('Payment failed, try again');
+      }
+    });
+  } catch(e) {
+    showToast('Error: ' + e.message);
+  }
+}
+
+function applyPurchase(type) {
+  hapticSuccess();
+  if (type === 'lives') {
+    lives = Math.min(lives + 5, 8);
+    refreshLives();
+    showToast('❤️ +5 Lives added!');
+  } else if (type === 'hint') {
+    progress.hints += 3;
+    saveProgress();
+    showToast('💡 3 Hints added!');
+  } else if (type === 'moon') {
+    if (progress.unlockedPacks.indexOf(2) === -1) progress.unlockedPacks.push(2);
+    saveProgress();
+    showToast('🌙 Moon Palace unlocked!');
+  } else if (type === 'magic') {
+    if (progress.unlockedPacks.indexOf(3) === -1) progress.unlockedPacks.push(3);
+    saveProgress();
+    showToast('🔮 Magic Realm unlocked!');
+  }
 }
 
 // ── SHARE ──
