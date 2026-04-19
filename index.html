@@ -763,7 +763,9 @@ function useHint() {
 // ── ADSGRAM ──
 // Замени 'YOUR_BLOCK_ID' на свой ID из кабинета adsgram.ai
 var ADSGRAM_BLOCK_ID = '28184';
+var ADSGRAM_INTERSTITIAL_ID = 'int-28186';
 var adController = null;
+var adInterstitialController = null;
 var adPendingReward = null; // { type: 'lives'|'coins', amount: Number }
 var adLevelCount = 0;       // счётчик уровней для авто-показа
 
@@ -771,6 +773,7 @@ function initAdsgram() {
   if (typeof AdController === 'undefined') return;
   try {
     adController = AdController.init({ blockId: ADSGRAM_BLOCK_ID, debug: false });
+    adInterstitialController = AdController.init({ blockId: ADSGRAM_INTERSTITIAL_ID, debug: false });
   } catch(e) {
     console.log('Adsgram init error:', e);
   }
@@ -795,15 +798,26 @@ function watchAdForCoins() {
   hapticLight();
 }
 
-// После N уровней — показать рекламу автоматически (interstitial-стиль)
+// После N уровней — показать interstitial автоматически
 function maybeShowInterstitial() {
   adLevelCount++;
-  if (adLevelCount % 3 !== 0) return; // каждые 3 уровня
-  adPendingReward = { type: 'coins', amount: 10 };
-  document.getElementById('adRewardText').innerHTML = '🌸 +10 Coins за просмотр';
-  document.getElementById('adBox').style.display = '';
-  document.getElementById('adLoading').style.display = 'none';
-  document.getElementById('adOverlay').classList.add('open');
+  if (adLevelCount % 3 !== 0) return;
+
+  if (!adInterstitialController) {
+    // Dev-режим: пропускаем
+    return;
+  }
+
+  // Показываем сразу без диалога — настоящий interstitial
+  adInterstitialController.show()
+    .then(function() {
+      // досмотрел — даём монеты тихо
+      progress.coins += 5;
+      saveProgress();
+    })
+    .catch(function() {
+      // закрыл — ничего не даём, не ругаемся
+    });
 }
 
 function startAd() {
