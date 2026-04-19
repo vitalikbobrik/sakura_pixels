@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Sakura Pixels</title>
+<!-- Telegram Mini App SDK -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<!-- Adsgram SDK -->
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Pacifico&display=swap" rel="stylesheet">
+<style>
+:root {
+  --pink: #FF8FAB;
+  --pink-light: #FFB3C6;
+  --pink-pale: #FFE4EE;
+  --lavender: #C9B8F0;
+  --white: #FFFBFE;
+  --text: #3D2B4E;
+  --text-soft: #9B7BB8;
+  --shadow: rgba(200,150,200,0.25);
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; }
+
+body {
+  font-family:'Nunito',sans-serif;
+  background:linear-gradient(160deg,#FFE9F3 0%,#F0E6FF 50%,#E6F5FF 100%);
+  min-height:100vh;
+  min-height:100dvh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+.petal {
+  position:fixed; border-radius:50% 0 50% 0; opacity:0.5;
+  pointer-events:none; animation:petalFall linear infinite; z-index:0;
+}
+@keyframes petalFall {
+  0%   { transform:translateY(-20px) rotate(0deg); opacity:0.6; }
+  100% { transform:translateY(110vh) rotate(360deg); opacity:0; }
+}
+
+/* Full screen app — no phone shell */
+.app {
+  width:100%; height:100vh; height:100dvh;
+  display:flex; flex-direction:column;
+  position:relative; z-index:1;
+  overflow:hidden;
+}
+
+.screen { display:none; flex-direction:column; flex:1; overflow:hidden; }
+.screen.active { display:flex; }
+
+/* ── USER HEADER ── */
+.user-bar {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 16px 6px;
+  background:rgba(255,255,255,0.6);
+  backdrop-filter:blur(8px);
+  flex-shrink:0;
+}
+.user-avatar {
+  width:32px; height:32px; border-radius:50%;
+  background:linear-gradient(135deg,#FF8FAB,#C9B8F0);
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; overflow:hidden; flex-shrink:0;
+}
+.user-avatar img { width:100%; height:100%; object-fit:cover; }
+.user-name { font-size:14px; font-weight:700; color:var(--text); flex:1; }
+.coins {
+  background:linear-gradient(135deg,#FFD93D,#FF9F43); border-radius:20px; padding:5px 12px;
+  display:flex; align-items:center; gap:5px; box-shadow:0 4px 12px rgba(255,160,50,0.3);
+}
+.coins b { color:white; font-weight:800; font-size:14px; }
+
+/* ── HOME ── */
+#home { background:linear-gradient(180deg,#FFE9F3 0%,#F5EEFF 100%); }
+.home-header { padding:12px 20px 8px; display:flex; justify-content:space-between; align-items:center; }
+.logo {
+  font-family:'Pacifico',cursive; font-size:26px;
+  background:linear-gradient(135deg,#FF6B9D,#9B59B6);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.home-scroll { flex:1; overflow-y:auto; padding:0 16px 16px; }
+.home-scroll::-webkit-scrollbar { display:none; }
+.featured {
+  background:linear-gradient(135deg,#FF8FAB,#C9B8F0); border-radius:24px; padding:18px;
+  margin-bottom:16px; position:relative; overflow:hidden;
+  box-shadow:0 12px 30px var(--shadow); cursor:pointer; transition:transform 0.15s;
+}
+.featured:active { transform:scale(0.97); }
+.featured-label {
+  background:rgba(255,255,255,0.3); border-radius:12px; padding:4px 12px;
+  display:inline-block; color:white; font-size:12px; font-weight:700; margin-bottom:8px;
+}
+.featured h2 { color:white; font-size:20px; font-weight:800; margin-bottom:3px; }
+.featured p { color:rgba(255,255,255,0.85); font-size:13px; margin-bottom:14px; }
+.featured-btn {
+  background:white; color:#FF6B9D; border:none; border-radius:14px; padding:9px 20px;
+  font-family:'Nunito',sans-serif; font-weight:800; font-size:13px; cursor:pointer;
+}
+.featured-emoji { position:absolute; right:20px; bottom:14px; font-size:56px; }
+.section-title { font-size:16px; font-weight:800; color:var(--text); margin-bottom:12px; }
+.packs { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+.pack {
+  background:white; border-radius:20px; padding:14px;
+  box-shadow:0 6px 20px var(--shadow); cursor:pointer;
+  transition:transform 0.15s; position:relative; overflow:hidden;
+}
+.pack:active { transform:scale(0.95); }
+.pack-emoji { font-size:34px; margin-bottom:6px; display:block; }
+.pack-name { font-size:13px; font-weight:800; color:var(--text); }
+.pack-sub { font-size:11px; color:var(--text-soft); margin-top:2px; }
+.pack-bar { height:5px; background:var(--pink-pale); border-radius:10px; margin-top:8px; overflow:hidden; }
+.pack-bar-fill { height:100%; border-radius:10px; background:linear-gradient(90deg,var(--pink),var(--lavender)); transition:width 0.5s; }
+.pack-badge {
+  position:absolute; top:8px; right:8px;
+  background:linear-gradient(135deg,#FF6B9D,#9B59B6);
+  color:white; font-size:9px; font-weight:800; padding:3px 7px; border-radius:8px;
+}
+.pack-locked { opacity:0.6; }
+.pack-lock-icon { position:absolute; top:8px; right:8px; font-size:14px; }
+
+.nav {
+  height:68px; background:white; border-top:1px solid #F0E6FF;
+  display:flex; align-items:center; padding:0 8px 8px; flex-shrink:0;
+}
+.nav-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; padding:6px 0; }
+.nav-icon { font-size:22px; }
+.nav-label { font-size:10px; font-weight:700; color:var(--text-soft); }
+.nav-item.active .nav-label { color:var(--pink); }
+
+/* ── PUZZLE ── */
+#puzzle { background:linear-gradient(180deg,#FFF0F7 0%,#F5EEFF 100%); }
+.puzzle-header { padding:10px 16px; display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.back-btn {
+  width:38px; height:38px; background:white; border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; box-shadow:0 4px 12px var(--shadow); cursor:pointer; border:none;
+}
+.puzzle-title { font-size:15px; font-weight:800; color:var(--text); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#lives { font-size:20px; letter-spacing:1px; }
+.nonogram-wrap { flex:1; display:flex; align-items:center; justify-content:center; padding:6px; overflow:hidden; }
+.nonogram { display:flex; flex-direction:column; }
+.nono-top { display:flex; }
+.nono-col-clue { display:flex; flex-direction:column; align-items:center; justify-content:flex-end; padding-bottom:4px; gap:2px; }
+.nono-body { display:flex; }
+.nono-row-clues { display:flex; flex-direction:column; }
+.nono-row-clue { display:flex; align-items:center; justify-content:flex-end; gap:3px; padding-right:5px; }
+.clue-num {
+  font-weight:800; color:var(--text); background:white; border-radius:6px;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 2px 6px var(--shadow);
+}
+.nono-grid { display:flex; flex-direction:column; border-radius:10px; overflow:hidden; box-shadow:0 8px 30px var(--shadow); }
+.nono-row { display:flex; }
+.cell {
+  background:white; border:1.5px solid #F0E6FF; cursor:pointer; position:relative;
+  display:flex; align-items:center; justify-content:center; touch-action:none;
+  transition:background 0.08s;
+}
+.cell.filled { background:linear-gradient(135deg,#FF8FAB,#C9B8F0); border-color:transparent; }
+.cell.filled::after {
+  content:''; position:absolute; top:4px; left:4px;
+  width:5px; height:5px; background:rgba(255,255,255,0.5); border-radius:50%;
+}
+.cell.crossed { background:#F8F0FF; }
+.cell.crossed::before { content:'✕'; font-size:11px; color:#B090D0; font-weight:900; }
+.cell.autox { background:#F3EEFF; }
+.cell.autox::before { content:'✕'; font-size:10px; color:#D4A8F0; font-weight:900; }
+.cell.wrong { background:#FF3355 !important; border-color:transparent; }
+@keyframes cellPop { 0%{transform:scale(0.7)} 60%{transform:scale(1.2)} 100%{transform:scale(1)} }
+.cell.pop { animation:cellPop 0.22s ease forwards; }
+
+.puzzle-footer { padding:0 16px 10px; flex-shrink:0; }
+.prog-label { display:flex; justify-content:space-between; font-size:12px; font-weight:700; color:var(--text-soft); margin-bottom:5px; }
+.prog-bar { height:8px; background:var(--pink-pale); border-radius:10px; overflow:hidden; }
+.prog-fill { height:100%; border-radius:10px; background:linear-gradient(90deg,var(--pink),var(--lavender)); transition:width 0.3s; }
+
+/* ── WIN / GAMEOVER ── */
+#win, #gameover {
+  align-items:center; justify-content:center; text-align:center; padding:24px;
+  background:linear-gradient(160deg,#FFE9F3 0%,#F0E6FF 50%,#E6F5FF 100%);
+}
+.big-emoji { font-size:56px; margin-bottom:8px; animation:bounce 0.6s ease infinite alternate; }
+@keyframes bounce { from{transform:translateY(0)} to{transform:translateY(-10px)} }
+.screen-title {
+  font-family:'Pacifico',cursive; font-size:30px;
+  background:linear-gradient(135deg,#FF6B9D,#9B59B6);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  margin-bottom:6px;
+}
+.screen-sub { font-size:14px; color:var(--text-soft); font-weight:600; margin-bottom:20px; }
+.result-card {
+  background:white; border-radius:24px; padding:20px;
+  box-shadow:0 16px 50px var(--shadow); margin-bottom:20px; width:100%; max-width:280px;
+}
+.win-char { font-size:80px; line-height:1; margin-bottom:8px; }
+.win-name { font-size:18px; font-weight:800; color:var(--text); margin-bottom:3px; }
+.win-sub2 { font-size:12px; color:var(--text-soft); }
+.stars { font-size:24px; margin-top:12px; }
+.score-big { font-size:42px; font-weight:900; color:var(--text); }
+.btns { display:flex; flex-direction:column; gap:10px; width:100%; max-width:280px; }
+.btn-p {
+  background:linear-gradient(135deg,#FF8FAB,#C9B8F0); color:white; border:none;
+  border-radius:18px; padding:14px; font-family:'Nunito',sans-serif;
+  font-weight:800; font-size:15px; cursor:pointer; box-shadow:0 8px 20px var(--shadow);
+}
+.btn-s {
+  background:white; color:var(--pink); border:2px solid var(--pink-light);
+  border-radius:18px; padding:12px; font-family:'Nunito',sans-serif;
+  font-weight:800; font-size:14px; cursor:pointer;
+}
+
+/* ── STARS SHOP MODAL ── */
+.modal-overlay {
+  display:none; position:fixed; inset:0; background:rgba(61,43,78,0.5);
+  z-index:100; align-items:flex-end; justify-content:center;
+  backdrop-filter:blur(4px);
+}
+.modal-overlay.open { display:flex; }
+.modal {
+  background:white; border-radius:32px 32px 0 0; padding:24px; width:100%;
+  animation:slideUp 0.3s ease;
+}
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.modal-title {
+  font-family:'Pacifico',cursive; font-size:22px;
+  background:linear-gradient(135deg,#FF6B9D,#9B59B6);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  margin-bottom:6px; text-align:center;
+}
+.modal-sub { font-size:13px; color:var(--text-soft); text-align:center; margin-bottom:20px; font-weight:600; }
+.shop-items { display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
+.shop-item {
+  display:flex; align-items:center; gap:14px;
+  background:var(--pink-pale); border-radius:18px; padding:14px;
+  cursor:pointer; transition:transform 0.15s; border:2px solid transparent;
+}
+.shop-item:active { transform:scale(0.97); border-color:var(--pink); }
+.shop-icon { font-size:28px; }
+.shop-info { flex:1; }
+.shop-name { font-size:14px; font-weight:800; color:var(--text); }
+.shop-desc { font-size:11px; color:var(--text-soft); margin-top:2px; }
+.shop-price {
+  background:linear-gradient(135deg,#FFD93D,#FF9F43);
+  color:white; font-weight:800; font-size:13px;
+  padding:6px 12px; border-radius:12px;
+}
+.modal-close {
+  width:100%; background:var(--pink-pale); border:none; border-radius:16px;
+  padding:12px; font-family:'Nunito',sans-serif; font-weight:800; font-size:14px;
+  color:var(--text-soft); cursor:pointer;
+}
+
+/* ── HINT BUTTON ── */
+.hint-btn {
+  width:38px; height:38px; background:linear-gradient(135deg,#FFD93D,#FF9F43);
+  border-radius:12px; border:none; font-size:16px; cursor:pointer;
+  box-shadow:0 4px 12px rgba(255,160,50,0.3); display:flex; align-items:center; justify-content:center;
+}
+
+/* ── FX ── */
+.sparkle-fx {
+  position:fixed; pointer-events:none; z-index:999; font-size:16px;
+  animation:sparkleFly 0.6s ease forwards;
+}
+@keyframes sparkleFly { 0%{transform:translateY(0) scale(1);opacity:1} 100%{transform:translateY(-50px) scale(0);opacity:0} }
+.confetti-fx {
+  position:fixed; pointer-events:none; z-index:999;
+  animation:confettiFall linear forwards;
+}
+@keyframes confettiFall { 0%{transform:translateY(-20px) rotate(0);opacity:1} 100%{transform:translateY(900px) rotate(720deg);opacity:0} }
+
+/* ── AD OVERLAY ── */
+.ad-overlay {
+  display:none; position:fixed; inset:0; z-index:150;
+  background:rgba(61,43,78,0.85); backdrop-filter:blur(6px);
+  align-items:center; justify-content:center; flex-direction:column;
+  text-align:center; padding:24px;
+}
+.ad-overlay.open { display:flex; }
+.ad-box {
+  background:white; border-radius:28px; padding:28px 24px;
+  width:100%; max-width:300px;
+  box-shadow:0 20px 60px rgba(61,43,78,0.3);
+  animation:slideUp 0.3s ease;
+}
+.ad-emoji { font-size:52px; margin-bottom:10px; }
+.ad-title {
+  font-family:'Pacifico',cursive; font-size:20px;
+  background:linear-gradient(135deg,#FF6B9D,#9B59B6);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  margin-bottom:6px;
+}
+.ad-sub { font-size:13px; color:var(--text-soft); font-weight:600; margin-bottom:20px; line-height:1.5; }
+.ad-reward {
+  background:var(--pink-pale); border-radius:16px; padding:12px;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  margin-bottom:16px; font-size:13px; font-weight:800; color:var(--text);
+}
+.btn-ad {
+  width:100%; background:linear-gradient(135deg,#FF8FAB,#C9B8F0); color:white; border:none;
+  border-radius:18px; padding:14px; font-family:'Nunito',sans-serif;
+  font-weight:800; font-size:15px; cursor:pointer; box-shadow:0 8px 20px var(--shadow);
+  margin-bottom:10px;
+}
+.btn-ad-skip {
+  width:100%; background:none; border:none; color:var(--text-soft);
+  font-family:'Nunito',sans-serif; font-weight:700; font-size:13px; cursor:pointer;
+  padding:8px;
+}
+.ad-loading {
+  display:flex; flex-direction:column; align-items:center; gap:12px; color:white;
+}
+.ad-spinner {
+  width:40px; height:40px; border:4px solid rgba(255,255,255,0.3);
+  border-top-color:white; border-radius:50%;
+  animation:spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ── TOAST ── */
+.toast {
+  position:fixed; bottom:90px; left:50%; transform:translateX(-50%) translateY(20px);
+  background:rgba(61,43,78,0.9); color:white; padding:10px 20px; border-radius:16px;
+  font-weight:700; font-size:13px; opacity:0; transition:all 0.3s; z-index:200;
+  white-space:nowrap; pointer-events:none;
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- USER BAR (shown on home & puzzle) -->
+  <div class="user-bar" id="userBar">
+    <div class="user-avatar" id="userAvatar">🌸</div>
+    <div class="user-name" id="userName">Player</div>
+    <div class="coins"><span>🌸</span><b id="coinCount">0</b></div>
+  </div>
+
+  <!-- HOME -->
+  <div class="screen active" id="home">
+    <div class="home-header">
+      <div class="logo">Sakura Pixels</div>
+    </div>
+    <div class="home-scroll">
+      <div class="featured" onclick="startLevel(0)">
+        <div class="featured-label">✨ DAILY CHALLENGE</div>
+        <h2>Sakura Spirit</h2>
+        <p>New puzzle every day!</p>
+        <button class="featured-btn">Play Now →</button>
+        <div class="featured-emoji">🌸</div>
+      </div>
+      <div class="section-title">🎀 Character Packs</div>
+      <div class="packs">
+        <div class="pack" onclick="startLevel(0)">
+          <span class="pack-emoji">🌸</span>
+          <div class="pack-name">Sakura World</div>
+          <div class="pack-sub">5×5 · 20 levels · Easy</div>
+          <div class="pack-bar"><div class="pack-bar-fill" id="pb0" style="width:0"></div></div>
+          <div class="pack-badge">FREE</div>
+        </div>
+        <div class="pack" onclick="startLevel(20)">
+          <span class="pack-emoji">🐱</span>
+          <div class="pack-name">Neko Kingdom</div>
+          <div class="pack-sub">7×7 · 30 levels · Medium</div>
+          <div class="pack-bar"><div class="pack-bar-fill" id="pb1" style="width:0"></div></div>
+          <div class="pack-badge">NEW</div>
+        </div>
+        <div class="pack" id="pack2" onclick="startPack2()">
+          <span class="pack-emoji">🌙</span>
+          <div class="pack-name">Moon Palace</div>
+          <div class="pack-sub">8×8 · 20 levels · Hard</div>
+          <div class="pack-bar"><div class="pack-bar-fill" id="pb2" style="width:0"></div></div>
+          <div class="pack-lock-icon" id="lock2">🔒</div>
+        </div>
+        <div class="pack" id="pack3" onclick="startPack3()">
+          <span class="pack-emoji">🔮</span>
+          <div class="pack-name">Magic Realm</div>
+          <div class="pack-sub">10×10 · 30 levels · Expert</div>
+          <div class="pack-bar"><div class="pack-bar-fill" id="pb3" style="width:0"></div></div>
+          <div class="pack-lock-icon" id="lock3">🔒</div>
+        </div>
+      </div>
+    </div>
+    <div class="nav">
+      <div class="nav-item active"><div class="nav-icon">🏠</div><div class="nav-label">Home</div></div>
+      <div class="nav-item" onclick="showShop()"><div class="nav-icon">⭐</div><div class="nav-label">Shop</div></div>
+      <div class="nav-item" onclick="startLevel(0)"><div class="nav-icon">🎁</div><div class="nav-label">Daily</div></div>
+      <div class="nav-item" onclick="shareGame()"><div class="nav-icon">👥</div><div class="nav-label">Share</div></div>
+    </div>
+  </div>
+
+  <!-- PUZZLE -->
+  <div class="screen" id="puzzle">
+    <div class="puzzle-header">
+      <button class="back-btn" onclick="goHome()">←</button>
+      <div class="puzzle-title" id="ptitle">Puzzle</div>
+      <button class="hint-btn" onclick="showShop()" title="Get hints">💡</button>
+      <div id="lives">❤️❤️❤️</div>
+    </div>
+    <div class="nonogram-wrap">
+      <div class="nonogram" id="nonogram"></div>
+    </div>
+    <div class="puzzle-footer">
+      <div class="prog-label"><span>Progress</span><span id="ppct">0%</span></div>
+      <div class="prog-bar"><div class="prog-fill" id="pfill" style="width:0%"></div></div>
+    </div>
+    <div class="nav">
+      <div class="nav-item" onclick="goHome()"><div class="nav-icon">🏠</div><div class="nav-label">Home</div></div>
+      <div class="nav-item active"><div class="nav-icon">🧩</div><div class="nav-label">Puzzle</div></div>
+      <div class="nav-item" onclick="undoMove()"><div class="nav-icon">↩️</div><div class="nav-label">Undo</div></div>
+      <div class="nav-item" onclick="useHint()"><div class="nav-icon">💡</div><div class="nav-label">Hint</div></div>
+    </div>
+  </div>
+
+  <!-- WIN -->
+  <div class="screen" id="win">
+    <div class="big-emoji">✨🌸✨</div>
+    <div class="screen-title">Complete!</div>
+    <div class="screen-sub">You unlocked a new character!</div>
+    <div class="result-card">
+      <div class="win-char" id="wchar">🌸</div>
+      <div class="win-name" id="wname">Hana-chan</div>
+      <div class="win-sub2" id="wsub">Sakura Collection</div>
+      <div class="stars">⭐⭐⭐</div>
+    </div>
+    <div class="btns">
+      <button class="btn-p" id="nextbtn">▶ Next Puzzle</button>
+      <button class="btn-s" onclick="watchAdForCoins()">📺 Watch Ad → 🌸+20</button>
+      <button class="btn-s" onclick="goHome()">🏠 Home</button>
+    </div>
+  </div>
+
+  <!-- GAME OVER -->
+  <div class="screen" id="gameover">
+    <div class="big-emoji">💔</div>
+    <div class="screen-title">No Lives Left!</div>
+    <div class="screen-sub">Don't give up, try again! 🌸</div>
+    <div class="result-card">
+      <div style="font-size:13px;color:var(--text-soft);font-weight:700;margin-bottom:6px">YOU PAINTED</div>
+      <div class="score-big" id="goscore">0%</div>
+      <div style="font-size:13px;color:var(--text-soft);margin-top:4px">of the puzzle</div>
+    </div>
+    <div class="btns">
+      <button class="btn-p" onclick="watchAdForLives()">📺 Watch Ad → ❤️+2</button>
+      <button class="btn-p" onclick="showShop()">💫 Get More Lives</button>
+      <button class="btn-p" id="retrybtn">🔄 Try Again</button>
+      <button class="btn-s" onclick="goHome()">🏠 Home</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- AD OVERLAY -->
+<div class="ad-overlay" id="adOverlay">
+  <div class="ad-box" id="adBox">
+    <div class="ad-emoji">📺</div>
+    <div class="ad-title">Quick Break!</div>
+    <div class="ad-sub">Watch a short ad and get your reward</div>
+    <div class="ad-reward" id="adRewardText">❤️ +2 Lives</div>
+    <button class="btn-ad" id="adWatchBtn" onclick="startAd()">▶ Watch Ad</button>
+    <button class="btn-ad-skip" onclick="closeAd()">No thanks</button>
+  </div>
+  <div class="ad-loading" id="adLoading" style="display:none">
+    <div class="ad-spinner"></div>
+    <div style="font-weight:700;font-size:14px">Loading ad...</div>
+  </div>
+</div>
+
+<!-- SHOP MODAL -->
+<div class="modal-overlay" id="shopModal" onclick="closeShop(event)">
+  <div class="modal">
+    <div class="modal-title">⭐ Sakura Shop</div>
+    <div class="modal-sub">Use Telegram Stars to get power-ups</div>
+    <div class="shop-items">
+      <div class="shop-item" onclick="buyItem('lives')">
+        <div class="shop-icon">❤️</div>
+        <div class="shop-info">
+          <div class="shop-name">+5 Lives</div>
+          <div class="shop-desc">Keep playing without waiting</div>
+        </div>
+        <div class="shop-price">★ 25</div>
+      </div>
+      <div class="shop-item" onclick="buyItem('hint')">
+        <div class="shop-icon">💡</div>
+        <div class="shop-info">
+          <div class="shop-name">3 Hints</div>
+          <div class="shop-desc">Reveal one correct cell</div>
+        </div>
+        <div class="shop-price">★ 15</div>
+      </div>
+      <div class="shop-item" onclick="buyItem('moon')">
+        <div class="shop-icon">🌙</div>
+        <div class="shop-info">
+          <div class="shop-name">Moon Palace Pack</div>
+          <div class="shop-desc">20 hard 8×8 puzzles unlocked</div>
+        </div>
+        <div class="shop-price">★ 99</div>
+      </div>
+      <div class="shop-item" onclick="buyItem('magic')">
+        <div class="shop-icon">🔮</div>
+        <div class="shop-info">
+          <div class="shop-name">Magic Realm Pack</div>
+          <div class="shop-desc">30 expert 10×10 puzzles</div>
+        </div>
+        <div class="shop-price">★ 149</div>
+      </div>
+    </div>
+    <button class="modal-close" onclick="closeShopBtn()">Close</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── TELEGRAM SDK INIT ──
+var tg = window.Telegram && window.Telegram.WebApp;
+var storage = tg && tg.CloudStorage;
+
+if (tg) {
+  tg.ready();
+  tg.expand();
+  // Use Telegram theme colors if available
+  if (tg.colorScheme === 'dark') {
+    document.documentElement.style.setProperty('--white', '#1E1E2E');
+    document.documentElement.style.setProperty('--text', '#F0E6FF');
+  }
+}
+
+// ── USER DISPLAY ──
+(function initUser() {
+  if (!tg || !tg.initDataUnsafe || !tg.initDataUnsafe.user) return;
+  var u = tg.initDataUnsafe.user;
+  var name = u.first_name || 'Player';
+  document.getElementById('userName').textContent = name;
+  if (u.photo_url) {
+    document.getElementById('userAvatar').innerHTML = '<img src="' + u.photo_url + '" alt="">';
+  }
+})();
+
+// ── HAPTICS ──
+function hapticLight()  { tg && tg.HapticFeedback && tg.HapticFeedback.impactOccurred('light'); }
+function hapticMedium() { tg && tg.HapticFeedback && tg.HapticFeedback.impactOccurred('medium'); }
+function hapticHeavy()  { tg && tg.HapticFeedback && tg.HapticFeedback.impactOccurred('heavy'); }
+function hapticSuccess(){ tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('success'); }
+function hapticError()  { tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('error'); }
+function hapticWarn()   { tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('warning'); }
+
+// ── PROGRESS / SAVE ──
+var progress = { coins: 240, completed: [], unlockedPacks: [0, 1], hints: 0 };
+
+function saveProgress() {
+  if (storage) {
+    storage.setItem('progress', JSON.stringify(progress), function(){});
+  } else {
+    try { localStorage.setItem('sakura_progress', JSON.stringify(progress)); } catch(e) {}
+  }
+  document.getElementById('coinCount').textContent = progress.coins;
+  updatePackBars();
+}
+
+function loadProgress(cb) {
+  if (storage) {
+    storage.getItem('progress', function(err, val) {
+      if (!err && val) {
+        try { progress = JSON.parse(val); } catch(e) {}
+      }
+      cb();
+    });
+  } else {
+    try {
+      var s = localStorage.getItem('sakura_progress');
+      if (s) progress = JSON.parse(s);
+    } catch(e) {}
+    cb();
+  }
+}
+
+function updatePackBars() {
+  var ranges = [[0,20],[20,50],[50,70],[70,100]];
+  ranges.forEach(function(r, i) {
+    var total = r[1] - r[0];
+    var done = 0;
+    for (var j = r[0]; j < r[1]; j++) {
+      if (progress.completed.indexOf(j) !== -1) done++;
+    }
+    var pct = total ? Math.round(done / total * 100) : 0;
+    var el = document.getElementById('pb' + i);
+    if (el) el.style.width = pct + '%';
+    var lock = document.getElementById('lock' + i);
+    if (lock) {
+      lock.textContent = progress.unlockedPacks.indexOf(i) !== -1 ? '' : '🔒';
+    }
+  });
+  document.getElementById('coinCount').textContent = progress.coins;
+}
+
+function markComplete(idx) {
+  if (progress.completed.indexOf(idx) === -1) {
+    progress.completed.push(idx);
+    progress.coins += 10;
+  }
+  saveProgress();
+}
+
+// ── PACK LOCK ──
+function startPack2() {
+  if (progress.unlockedPacks.indexOf(2) === -1) { showShop(); return; }
+  startLevel(50);
+}
+function startPack3() {
+  if (progress.unlockedPacks.indexOf(3) === -1) { showShop(); return; }
+  startLevel(70);
+}
+
+// ── SHOP ──
+function showShop() {
+  hapticLight();
+  document.getElementById('shopModal').classList.add('open');
+}
+function closeShop(e) {
+  if (e.target === document.getElementById('shopModal')) closeShopBtn();
+}
+function closeShopBtn() {
+  document.getElementById('shopModal').classList.remove('open');
+}
+
+function buyItem(type) {
+  hapticMedium();
+  if (!tg || !tg.openInvoice) {
+    // Dev mode fallback
+    if (type === 'lives') { lives = Math.min(lives + 5, 8); refreshLives(); showToast('❤️ +5 Lives added!'); }
+    else if (type === 'hint') { progress.hints += 3; saveProgress(); showToast('💡 3 Hints added!'); }
+    else if (type === 'moon') { if (progress.unlockedPacks.indexOf(2) === -1) progress.unlockedPacks.push(2); saveProgress(); showToast('🌙 Moon Palace unlocked!'); }
+    else if (type === 'magic') { if (progress.unlockedPacks.indexOf(3) === -1) progress.unlockedPacks.push(3); saveProgress(); showToast('🔮 Magic Realm unlocked!'); }
+    closeShopBtn();
+    return;
+  }
+  // Real Stars payment — you'd set up invoice links via BotFather / Payments API
+  // tg.openInvoice('YOUR_INVOICE_LINK_HERE', function(status) {
+  //   if (status === 'paid') { ... apply purchase ... }
+  // });
+  showToast('💫 Stars payment coming soon!');
+  closeShopBtn();
+}
+
+// ── SHARE ──
+function shareGame() {
+  hapticLight();
+  if (tg && tg.switchInlineQuery) {
+    tg.switchInlineQuery('Play Sakura Pixels with me! 🌸');
+  } else if (navigator.share) {
+    navigator.share({ title: 'Sakura Pixels', text: 'Play this cute nonogram puzzle! 🌸', url: window.location.href });
+  } else {
+    showToast('Share link copied! 🌸');
+  }
+}
+
+// ── TOAST ──
+function showToast(msg) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(function() { el.classList.remove('show'); }, 2500);
+}
+
+// ── HINT ──
+function useHint() {
+  if (progress.hints <= 0) { hapticWarn(); showShop(); return; }
+  // Find first unsolved cell that should be filled
+  var found = false;
+  for (var r = 0; r < SZ && !found; r++) {
+    for (var c = 0; c < SZ && !found; c++) {
+      if (sol[r][c] === 1 && grid[r][c] !== 1) {
+        grid[r][c] = 1;
+        renderCell(r, c);
+        popFx(r, c);
+        hapticSuccess();
+        found = true;
+      }
+    }
+  }
+  if (found) {
+    progress.hints--;
+    saveProgress();
+    refreshProgress();
+    reAutoX();
+    checkWin();
+    showToast('💡 Hint used! (' + progress.hints + ' left)');
+  } else {
+    showToast('No hints needed! 🌸');
+  }
+}
+
+// ── ADSGRAM ──
+// Замени 'YOUR_BLOCK_ID' на свой ID из кабинета adsgram.ai
+var ADSGRAM_BLOCK_ID = 'YOUR_BLOCK_ID';
+var adController = null;
+var adPendingReward = null; // { type: 'lives'|'coins', amount: Number }
+var adLevelCount = 0;       // счётчик уровней для авто-показа
+
+function initAdsgram() {
+  if (typeof AdController === 'undefined') return;
+  try {
+    adController = AdController.init({ blockId: ADSGRAM_BLOCK_ID, debug: false });
+  } catch(e) {
+    console.log('Adsgram init error:', e);
+  }
+}
+
+// Показать диалог с предложением посмотреть рекламу
+function watchAdForLives() {
+  adPendingReward = { type: 'lives', amount: 2 };
+  document.getElementById('adRewardText').innerHTML = '❤️ +2 Lives';
+  document.getElementById('adBox').style.display = '';
+  document.getElementById('adLoading').style.display = 'none';
+  document.getElementById('adOverlay').classList.add('open');
+  hapticLight();
+}
+
+function watchAdForCoins() {
+  adPendingReward = { type: 'coins', amount: 20 };
+  document.getElementById('adRewardText').innerHTML = '🌸 +20 Coins';
+  document.getElementById('adBox').style.display = '';
+  document.getElementById('adLoading').style.display = 'none';
+  document.getElementById('adOverlay').classList.add('open');
+  hapticLight();
+}
+
+// После N уровней — показать рекламу автоматически (interstitial-стиль)
+function maybeShowInterstitial() {
+  adLevelCount++;
+  if (adLevelCount % 3 !== 0) return; // каждые 3 уровня
+  adPendingReward = { type: 'coins', amount: 10 };
+  document.getElementById('adRewardText').innerHTML = '🌸 +10 Coins за просмотр';
+  document.getElementById('adBox').style.display = '';
+  document.getElementById('adLoading').style.display = 'none';
+  document.getElementById('adOverlay').classList.add('open');
+}
+
+function startAd() {
+  if (!adController) {
+    // Dev-режим: симулируем показ рекламы
+    document.getElementById('adBox').style.display = 'none';
+    document.getElementById('adLoading').style.display = 'flex';
+    setTimeout(function() {
+      giveAdReward();
+    }, 2000);
+    return;
+  }
+  document.getElementById('adBox').style.display = 'none';
+  document.getElementById('adLoading').style.display = 'flex';
+  adController.show()
+    .then(function() {
+      giveAdReward();
+    })
+    .catch(function(err) {
+      // Юзер закрыл рекламу до конца — не даём награду
+      closeAd();
+      showToast('Watch the full ad to get reward 🌸');
+    });
+}
+
+function giveAdReward() {
+  closeAd();
+  if (!adPendingReward) return;
+  if (adPendingReward.type === 'lives') {
+    lives = Math.min(lives + adPendingReward.amount, 8);
+    refreshLives();
+    showToast('❤️ +' + adPendingReward.amount + ' Lives! Thanks for watching!');
+    hapticSuccess();
+    // Если были на game over — возвращаем к пазлу
+    var active = document.querySelector('.screen.active');
+    if (active && active.id === 'gameover') {
+      setTimeout(function() { startLevel(cidx); }, 600);
+    }
+  } else if (adPendingReward.type === 'coins') {
+    progress.coins += adPendingReward.amount;
+    saveProgress();
+    showToast('🌸 +' + adPendingReward.amount + ' Coins!');
+    hapticSuccess();
+  }
+  adPendingReward = null;
+}
+
+function closeAd() {
+  document.getElementById('adOverlay').classList.remove('open');
+  document.getElementById('adBox').style.display = '';
+  document.getElementById('adLoading').style.display = 'none';
+}
+
+// ── LEVELS ──
+var LEVELS = [
+  {name:"Flower #1", ch:"🌸", cn:"Hana-chan", sz:5, s:[[0,1,1,1,0],[1,1,0,1,1],[1,1,1,1,1],[0,1,1,1,0],[0,0,1,0,0]]},
+  {name:"Heart #2", ch:"💕", cn:"Ai-chan", sz:5, s:[[0,1,0,1,0],[1,1,1,1,1],[1,1,1,1,1],[0,1,1,1,0],[0,0,1,0,0]]},
+  {name:"Star #3", ch:"⭐", cn:"Hoshi", sz:5, s:[[0,0,1,0,0],[0,1,1,1,0],[1,1,1,1,1],[0,1,1,1,0],[0,0,1,0,0]]},
+  {name:"Arrow #4", ch:"➡️", cn:"Yumi", sz:5, s:[[0,0,1,0,0],[0,0,1,1,0],[1,1,1,1,1],[0,0,1,1,0],[0,0,1,0,0]]},
+  {name:"Diamond #5", ch:"💎", cn:"Kirameki", sz:5, s:[[0,0,1,0,0],[0,1,1,1,0],[1,1,1,1,1],[0,1,1,1,0],[0,0,1,0,0]]},
+  {name:"Cup #6", ch:"🏆", cn:"Yuzu", sz:5, s:[[1,1,1,1,1],[1,0,1,0,1],[0,1,1,1,0],[0,0,1,0,0],[0,1,1,1,0]]},
+  {name:"Fish #7", ch:"🐟", cn:"Sakana", sz:5, s:[[0,1,0,0,1],[1,1,1,0,1],[1,1,1,1,1],[1,1,1,0,1],[0,1,0,0,1]]},
+  {name:"Tree #8", ch:"🌲", cn:"Mori", sz:5, s:[[0,0,1,0,0],[0,1,1,1,0],[1,1,1,1,1],[0,0,1,0,0],[0,1,1,1,0]]},
+  {name:"Plus #9", ch:"➕", cn:"Tashi", sz:5, s:[[0,0,1,0,0],[0,0,1,0,0],[1,1,1,1,1],[0,0,1,0,0],[0,0,1,0,0]]},
+  {name:"Box #10", ch:"📦", cn:"Hako", sz:5, s:[[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,1]]},
+  {name:"Smile #11", ch:"😊", cn:"Emi", sz:5, s:[[0,1,0,1,0],[0,1,0,1,0],[0,0,0,0,0],[1,0,0,0,1],[0,1,1,1,0]]},
+  {name:"Moon #12", ch:"🌙", cn:"Tsuki", sz:5, s:[[0,1,1,0,0],[1,1,1,1,0],[1,1,1,1,1],[1,1,1,1,0],[0,1,1,0,0]]},
+  {name:"Sun #13", ch:"☀️", cn:"Taiyou", sz:5, s:[[0,1,0,1,0],[0,0,1,0,0],[1,1,1,1,1],[0,0,1,0,0],[0,1,0,1,0]]},
+  {name:"Bow #14", ch:"🎀", cn:"Ribon", sz:5, s:[[1,0,0,0,1],[1,1,0,1,1],[0,1,1,1,0],[1,1,0,1,1],[1,0,0,0,1]]},
+  {name:"Crown #15", ch:"👑", cn:"Ouhi", sz:5, s:[[1,0,1,0,1],[1,1,1,1,1],[1,1,1,1,1],[0,1,1,1,0],[0,1,1,1,0]]},
+  {name:"Bird #16", ch:"🐦", cn:"Tori", sz:5, s:[[0,1,1,0,0],[1,1,1,1,0],[1,1,1,1,1],[1,1,1,1,0],[0,0,1,0,0]]},
+  {name:"Mushroom #17", ch:"🍄", cn:"Kinoko", sz:5, s:[[0,1,1,1,0],[1,1,1,1,1],[1,1,1,1,1],[0,0,1,0,0],[0,1,1,1,0]]},
+  {name:"Flag #18", ch:"🚩", cn:"Hata", sz:5, s:[[1,0,0,0,0],[1,1,1,1,0],[1,1,1,1,1],[1,0,0,0,0],[1,0,0,0,0]]},
+  {name:"Drop #19", ch:"💧", cn:"Shizuku", sz:5, s:[[0,0,1,0,0],[0,1,1,1,0],[1,1,1,1,1],[1,1,1,1,1],[0,1,1,1,0]]},
+  {name:"Zigzag #20", ch:"⚡", cn:"Inazuma", sz:5, s:[[1,0,0,0,0],[1,1,0,0,0],[0,1,1,0,0],[0,0,1,1,0],[0,0,0,1,1]]},
+  {name:"Neko #21", ch:"🐱", cn:"Mochi", sz:7, s:[[0,1,0,0,0,1,0],[1,1,1,1,1,1,1],[1,0,1,1,1,0,1],[1,1,1,1,1,1,1],[0,1,1,1,1,1,0],[0,0,1,0,1,0,0],[0,0,1,1,1,0,0]]},
+  {name:"Star7 #22", ch:"⭐", cn:"Hoshi2", sz:7, s:[[0,0,1,1,1,0,0],[0,1,1,1,1,1,0],[1,1,1,1,1,1,1],[0,1,1,1,1,1,0],[1,1,0,1,0,1,1],[1,0,0,1,0,0,1],[0,0,0,1,0,0,0]]},
+  {name:"Fox #23", ch:"🦊", cn:"Kitsune", sz:7, s:[[0,1,0,0,0,1,0],[1,1,0,0,0,1,1],[1,1,1,1,1,1,1],[0,1,1,1,1,1,0],[0,0,1,1,1,0,0],[0,0,0,1,0,0,0],[0,0,1,1,1,0,0]]},
+  {name:"Bunny #24", ch:"🐰", cn:"Usagi", sz:7, s:[[0,1,0,0,0,1,0],[0,1,0,0,0,1,0],[1,1,1,1,1,1,1],[1,0,1,1,1,0,1],[1,1,1,1,1,1,1],[0,1,1,1,1,1,0],[0,0,1,1,1,0,0]]},
+  {name:"Heart7 #25", ch:"💖", cn:"Kokoro", sz:7, s:[[0,1,1,0,1,1,0],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[0,1,1,1,1,1,0],[0,0,1,1,1,0,0],[0,0,0,1,0,0,0],[0,0,0,0,0,0,0]]},
+  {name:"Castle #26", ch:"🏰", cn:"Shiro", sz:7, s:[[1,0,1,0,1,0,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[0,1,0,1,0,1,0],[0,1,1,1,1,1,0],[0,1,0,1,0,1,0],[0,1,1,1,1,1,0]]},
+  {name:"Bow7 #27", ch:"🎀", cn:"Ribon2", sz:7, s:[[1,1,0,0,0,1,1],[1,1,1,0,1,1,1],[0,1,1,1,1,1,0],[0,0,1,1,1,0,0],[0,1,1,1,1,1,0],[1,1,1,0,1,1,1],[1,1,0,0,0,1,1]]},
+  {name:"Leaf #28", ch:"🍃", cn:"Ha", sz:7, s:[[0,0,0,1,0,0,0],[0,0,1,1,1,0,0],[0,1,1,1,1,1,0],[1,1,1,1,1,1,1],[0,1,1,1,1,1,0],[0,0,0,1,0,0,0],[0,0,0,1,0,0,0]]},
+  {name:"Bear #29", ch:"🐻", cn:"Kuma", sz:7, s:[[0,1,0,0,0,1,0],[1,1,1,1,1,1,1],[1,0,1,1,1,0,1],[1,1,1,1,1,1,1],[0,1,1,1,1,1,0],[0,1,0,0,0,1,0],[0,0,0,0,0,0,0]]},
+  {name:"Lotus #49", ch:"🪷", cn:"Hasu", sz:7, s:[[0,0,0,1,0,0,0],[0,0,1,1,1,0,0],[0,1,1,1,1,1,0],[1,1,1,1,1,1,1],[0,1,1,1,1,1,0],[0,0,1,1,1,0,0],[0,0,0,1,0,0,0]]},
+  {name:"Moon8 #51", ch:"🌙", cn:"Tsuki2", sz:8, s:[[0,0,1,1,1,1,0,0],[0,1,1,1,1,1,1,0],[1,1,1,0,0,1,1,1],[1,1,0,0,0,0,1,1],[1,1,0,0,0,0,1,1],[1,1,1,0,0,1,1,1],[0,1,1,1,1,1,1,0],[0,0,1,1,1,1,0,0]]},
+  {name:"Robot #68", ch:"🤖", cn:"Roboto", sz:8, s:[[0,1,1,0,0,1,1,0],[1,1,1,1,1,1,1,1],[1,0,1,1,1,1,0,1],[1,1,1,1,1,1,1,1],[0,1,1,1,1,1,1,0],[0,1,0,1,1,0,1,0],[0,1,0,0,0,0,1,0],[0,0,0,0,0,0,0,0]]},
+  {name:"Magic #71", ch:"🔮", cn:"Maho", sz:10, s:[[0,0,0,1,1,1,1,0,0,0],[0,0,1,1,1,1,1,1,0,0],[0,1,1,0,1,1,0,1,1,0],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[0,1,1,1,0,0,1,1,1,0],[0,0,1,1,1,1,1,1,0,0],[0,0,0,1,1,1,1,0,0,0],[0,0,0,0,1,1,0,0,0,0],[0,0,0,1,1,1,1,0,0,0]]},
+  {name:"Panda #72", ch:"🐼", cn:"Panda", sz:10, s:[[0,1,1,0,0,0,0,1,1,0],[1,1,1,1,0,0,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,0,1,1,1,1,1,1,0,1],[1,1,1,1,1,1,1,1,1,1],[0,1,1,1,1,1,1,1,1,0],[0,0,1,1,1,1,1,1,0,0],[0,0,0,1,0,0,1,0,0,0],[0,0,0,1,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0,0]]},
+  {name:"Final #100", ch:"🌟", cn:"Hoshi-Final", sz:10, s:[[0,0,0,1,1,1,1,0,0,0],[0,0,1,1,0,0,1,1,0,0],[0,1,1,0,1,1,0,1,1,0],[1,1,0,1,1,1,1,0,1,1],[1,0,1,1,1,1,1,1,0,1],[1,0,1,1,1,1,1,1,0,1],[1,1,0,1,1,1,1,0,1,1],[0,1,1,0,1,1,0,1,1,0],[0,0,1,1,0,0,1,1,0,0],[0,0,0,1,1,1,1,0,0,0]]}
+];
+
+var cidx=0, sol, SZ, grid, autox, lives, hist, dragging, lastKey;
+
+function startLevel(i) {
+  cidx = i % LEVELS.length;
+  var lv = LEVELS[cidx];
+  sol = lv.s; SZ = lv.sz;
+  grid=[]; autox=[];
+  for(var r=0;r<SZ;r++){grid.push(new Array(SZ).fill(0));autox.push(new Array(SZ).fill(false));}
+  lives=3; hist=[];
+  dragging=false; lastKey='';
+  document.getElementById('ptitle').textContent = lv.name;
+  document.getElementById('retrybtn').onclick = function(){ startLevel(cidx); };
+  document.getElementById('nextbtn').onclick = function(){ startLevel(cidx+1); };
+  refreshLives();
+  showScreen('puzzle');
+  buildGrid();
+  refreshProgress();
+  hapticLight();
+
+  // Telegram MainButton — next level
+  if (tg && tg.MainButton) {
+    tg.MainButton.hide();
+  }
+}
+
+function refreshLives() {
+  var s='';
+  for(var i=0;i<3;i++) s += i<lives?'❤️':'🖤';
+  document.getElementById('lives').textContent=s;
+}
+
+function clues(arr) {
+  var res=[],n=0;
+  for(var i=0;i<arr.length;i++){
+    if(arr[i]){n++;}else if(n){res.push(n);n=0;}
+  }
+  if(n) res.push(n);
+  return res.length?res:[0];
+}
+
+function buildGrid() {
+  var el=document.getElementById('nonogram');
+  el.innerHTML='';
+  // Fit to available space
+  var avail = Math.min(window.innerWidth - 32, window.innerHeight * 0.55);
+  var CS = Math.max(22, Math.floor(avail / (SZ + 3)));
+  CS = Math.min(CS, 40);
+
+  var rclues=[],cclues=[];
+  for(var r=0;r<SZ;r++) rclues.push(clues(sol[r]));
+  for(var c=0;c<SZ;c++){var col=[];for(var r=0;r<SZ;r++)col.push(sol[r][c]);cclues.push(clues(col));}
+  var mrn=0; for(var r=0;r<rclues.length;r++) mrn=Math.max(mrn,rclues[r].length);
+  var mcn=0; for(var c=0;c<cclues.length;c++) mcn=Math.max(mcn,cclues[c].length);
+  var ns=Math.max(12,CS-8);
+  var rw=(ns+4)*mrn+8; var ch2=(ns+4)*mcn+8;
+
+  var st=document.getElementById('dst')||document.createElement('style');
+  st.id='dst';
+  st.textContent='.cell{width:'+CS+'px!important;height:'+CS+'px!important}'
+    +'.nono-col-clue{width:'+CS+'px!important;min-height:'+ch2+'px!important}'
+    +'.nono-row-clue{height:'+CS+'px!important;width:'+rw+'px!important}'
+    +'.nono-top{margin-left:'+rw+'px!important}'
+    +'.clue-num{width:'+ns+'px!important;height:'+ns+'px!important;font-size:'+Math.max(8,ns-5)+'px!important}';
+  document.head.appendChild(st);
+
+  var top=document.createElement('div'); top.className='nono-top';
+  for(var c=0;c<SZ;c++){
+    var cd=document.createElement('div'); cd.className='nono-col-clue';
+    cclues[c].forEach(function(n){var d=document.createElement('div');d.className='clue-num';d.textContent=n;cd.appendChild(d);});
+    top.appendChild(cd);
+  }
+  el.appendChild(top);
+
+  var body=document.createElement('div'); body.className='nono-body';
+  var rcw=document.createElement('div'); rcw.className='nono-row-clues';
+  for(var r=0;r<SZ;r++){
+    var rd=document.createElement('div'); rd.className='nono-row-clue';
+    rclues[r].forEach(function(n){var d=document.createElement('div');d.className='clue-num';d.textContent=n;rd.appendChild(d);});
+    rcw.appendChild(rd);
+  }
+  body.appendChild(rcw);
+
+  var gel=document.createElement('div'); gel.className='nono-grid';
+  for(var r=0;r<SZ;r++){
+    var row=document.createElement('div'); row.className='nono-row';
+    for(var c=0;c<SZ;c++){
+      var cell=document.createElement('div'); cell.className='cell';
+      cell.dataset.r=r; cell.dataset.c=c;
+      hookCell(cell,r,c);
+      row.appendChild(cell);
+    }
+    gel.appendChild(row);
+  }
+  hookGridMove(gel);
+  body.appendChild(gel);
+  el.appendChild(body);
+}
+
+var downR=-1, downC=-1;
+
+function hookCell(cell,r,c){
+  cell.addEventListener('pointerdown',function(e){
+    e.preventDefault();
+    if(autox[r][c]) return;
+    dragging=true; lastKey=r+','+c;
+    downR=r; downC=c;
+    if(grid[r][c]!==1 && grid[r][c]!==2) drag(r,c);
+  });
+  cell.addEventListener('pointerup',function(e){
+    dragging=false; lastKey=''; downR=-1; downC=-1;
+  });
+}
+
+function hookGridMove(gel){
+  gel.addEventListener('pointermove',function(e){
+    if(!dragging) return;
+    var el=document.elementFromPoint(e.clientX,e.clientY);
+    if(!el||!el.classList.contains('cell')) return;
+    var r=parseInt(el.dataset.r,10), c=parseInt(el.dataset.c,10);
+    if(isNaN(r)||isNaN(c)) return;
+    var k=r+','+c; if(k===lastKey) return;
+    lastKey=k; downR=-1; downC=-1;
+    drag(r,c);
+  });
+}
+
+document.addEventListener('pointerup',function(){
+  dragging=false; lastKey=''; downR=-1; downC=-1;
+});
+
+function tap(r,c){
+  if(autox[r][c]||grid[r][c]===2) return;
+  if(grid[r][c]===1){ hist.push({r:r,c:c,v:1}); grid[r][c]=0; renderCell(r,c); refreshProgress(); reAutoX(); }
+  else { hist.push({r:r,c:c,v:0}); grid[r][c]=1; renderCell(r,c); popFx(r,c); refreshProgress(); reAutoX(); checkWin(); }
+}
+
+function drag(r,c){
+  if(autox[r][c]||grid[r][c]===2||grid[r][c]===1) return;
+  if(sol[r][c]===0){ loseLife(r,c); return; }
+  hist.push({r:r,c:c,v:0}); grid[r][c]=1; renderCell(r,c); popFx(r,c); refreshProgress(); reAutoX(); checkWin();
+}
+
+function loseLife(r,c){
+  if(lives<=0) return;
+  lives--; refreshLives();
+  hapticError();
+  var el=gc(r,c); if(el){el.classList.add('wrong');setTimeout(function(){el.classList.remove('wrong');},350);}
+  if(lives===0) setTimeout(function(){
+    document.getElementById('goscore').textContent=refreshProgress()+'%';
+    hapticHeavy();
+    showScreen('gameover');
+    if(tg && tg.MainButton){
+      tg.MainButton.setText('💫 Get Lives').show();
+      tg.MainButton.onClick(showShop);
+    }
+  },500);
+}
+
+function popFx(r,c){
+  hapticLight();
+  var el=gc(r,c); if(!el) return;
+  el.classList.add('pop'); setTimeout(function(){el.classList.remove('pop');},250);
+  var rect=el.getBoundingClientRect();
+  var sp=document.createElement('div'); sp.className='sparkle-fx';
+  sp.textContent=['✨','💫','🌸','⭐'][Math.floor(Math.random()*4)];
+  sp.style.left=(rect.left+rect.width/2-10)+'px'; sp.style.top=rect.top+'px';
+  document.body.appendChild(sp); setTimeout(function(){sp.remove();},600);
+}
+
+function reAutoX(){
+  var changed=false;
+  for(var r=0;r<SZ;r++) for(var c=0;c<SZ;c++){
+    if(sol[r][c]===1){autox[r][c]=false;continue;}
+    if(grid[r][c]===1){autox[r][c]=false;continue;}
+    var sh=rowOk(r)||colOk(c);
+    if(sh!==autox[r][c]){autox[r][c]=sh;changed=true;}
+  }
+  if(changed){
+    for(var r=0;r<SZ;r++) for(var c=0;c<SZ;c++) renderCell(r,c);
+    for(var r=0;r<SZ;r++) if(rowOk(r)) for(var c=0;c<SZ;c++) if(grid[r][c]===1) flashCell(r,c);
+    for(var c=0;c<SZ;c++) if(colOk(c)) for(var r=0;r<SZ;r++) if(grid[r][c]===1) flashCell(r,c);
+  }
+}
+function rowOk(r){for(var c=0;c<SZ;c++) if(sol[r][c]&&grid[r][c]!==1) return false; return true;}
+function colOk(c){for(var r=0;r<SZ;r++) if(sol[r][c]&&grid[r][c]!==1) return false; return true;}
+function flashCell(r,c){var el=gc(r,c);if(!el)return;el.style.filter='brightness(1.5)';setTimeout(function(){el.style.filter='';},300);}
+
+function renderCell(r,c){
+  var el=gc(r,c); if(!el) return;
+  el.className='cell'+(autox[r][c]?' autox':grid[r][c]===1?' filled':grid[r][c]===2?' crossed':'');
+}
+function gc(r,c){ return document.querySelector('.cell[data-r="'+r+'"][data-c="'+c+'"]'); }
+
+function refreshProgress(){
+  var tot=0,fil=0;
+  for(var r=0;r<SZ;r++) for(var c=0;c<SZ;c++){if(sol[r][c]){tot++;if(grid[r][c]===1)fil++;}}
+  var p=tot?Math.round(fil/tot*100):0;
+  document.getElementById('pfill').style.width=p+'%';
+  document.getElementById('ppct').textContent=p+'%';
+  return p;
+}
+
+function checkWin(){
+  for(var r=0;r<SZ;r++) for(var c=0;c<SZ;c++) if(sol[r][c]&&grid[r][c]!==1) return;
+  setTimeout(function(){
+    var lv=LEVELS[cidx];
+    document.getElementById('wchar').textContent=lv.ch;
+    document.getElementById('wname').textContent=lv.cn;
+    document.getElementById('wsub').textContent=lv.name;
+    markComplete(cidx);
+    hapticSuccess();
+    showScreen('win');
+    confetti();
+    maybeShowInterstitial();
+
+    // Show MainButton for next level
+    if(tg && tg.MainButton){
+      tg.MainButton.setText('▶ Next Puzzle').show();
+      tg.MainButton.onClick(function(){ startLevel(cidx+1); tg.MainButton.hide(); });
+    }
+  },400);
+}
+
+function undoMove(){
+  if(!hist.length) return;
+  hapticLight();
+  var h=hist.pop(); grid[h.r][h.c]=h.v; autox[h.r][h.c]=false;
+  reAutoX(); renderCell(h.r,h.c); refreshProgress();
+}
+
+function showScreen(id){
+  var ss=document.querySelectorAll('.screen');
+  for(var i=0;i<ss.length;i++) ss[i].classList.remove('active');
+  document.getElementById(id).classList.add('active');
+  // Show/hide user bar
+  document.getElementById('userBar').style.display = (id==='win'||id==='gameover') ? 'none' : '';
+}
+
+function goHome(){
+  hapticLight();
+  if(tg && tg.MainButton) tg.MainButton.hide();
+  showScreen('home');
+  updatePackBars();
+}
+
+function confetti(){
+  var cols=['#FF8FAB','#C9B8F0','#FFD93D','#A8E6CF','#FF6B9D'];
+  for(var i=0;i<40;i++){(function(){
+    var c=document.createElement('div'); c.className='confetti-fx';
+    c.style.left=Math.random()*100+'vw'; c.style.top='-20px';
+    c.style.width=c.style.height=(8+Math.random()*8)+'px';
+    c.style.background=cols[Math.floor(Math.random()*cols.length)];
+    c.style.borderRadius=Math.random()>.5?'50%':'2px';
+    c.style.animationDuration=(1.5+Math.random()*1.5)+'s';
+    c.style.animationDelay=Math.random()*.8+'s';
+    document.body.appendChild(c);
+    setTimeout(function(){c.remove();},3500);
+  })();}
+}
+
+// Petals
+(function(){
+  var cols=['#FFB3C6','#C9B8F0','#FFD93D','#A8E6CF'];
+  for(var i=0;i<12;i++){(function(){
+    var p=document.createElement('div'); p.className='petal';
+    var sz=6+Math.random()*10; p.style.width=p.style.height=sz+'px';
+    p.style.left=Math.random()*100+'vw';
+    p.style.background=cols[Math.floor(Math.random()*cols.length)];
+    p.style.animationDuration=(6+Math.random()*8)+'s';
+    p.style.animationDelay=Math.random()*10+'s';
+    document.body.appendChild(p);
+  })();}
+})();
+
+// Handle Telegram back button
+if(tg && tg.BackButton) {
+  tg.BackButton.onClick(function() {
+    var active = document.querySelector('.screen.active');
+    if(active && active.id !== 'home') {
+      goHome();
+    } else {
+      tg.close();
+    }
+  });
+}
+
+// Init
+loadProgress(function() {
+  updatePackBars();
+  initAdsgram();
+});
+</script>
+</body>
+</html>
