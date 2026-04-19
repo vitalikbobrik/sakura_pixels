@@ -233,7 +233,7 @@ body {
   -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
   margin-bottom:6px; text-align:center;
 }
-.modal-sub { font-size:13px; color:var(--text-soft); text-align:center; margin-bottom:20px; font-weight:600; }
+.modal-sub { font-size:13px; color:#9B7BB8; text-align:center; margin-bottom:20px; font-weight:600; }
 .shop-items { display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
 .shop-item {
   display:flex; align-items:center; gap:14px;
@@ -243,8 +243,8 @@ body {
 .shop-item:active { transform:scale(0.97); border-color:var(--pink); }
 .shop-icon { font-size:28px; }
 .shop-info { flex:1; }
-.shop-name { font-size:14px; font-weight:800; color:var(--text); }
-.shop-desc { font-size:11px; color:var(--text-soft); margin-top:2px; }
+.shop-name { font-size:14px; font-weight:800; color:#3D2B4E; }
+.shop-desc { font-size:11px; color:#9B7BB8; margin-top:2px; }
 .shop-price {
   background:linear-gradient(135deg,#FFD93D,#FF9F43);
   color:white; font-weight:800; font-size:13px;
@@ -253,7 +253,7 @@ body {
 .modal-close {
   width:100%; background:var(--pink-pale); border:none; border-radius:16px;
   padding:12px; font-family:'Nunito',sans-serif; font-weight:800; font-size:14px;
-  color:var(--text-soft); cursor:pointer;
+  color:#9B7BB8; cursor:pointer;
 }
 
 /* ── HINT BUTTON ── */
@@ -634,7 +634,7 @@ function closeShopBtn() {
 }
 
 // ── STARS PAYMENTS ──
-var API_URL = 'https://sakura-pixels-m9ohkkf9g-crazy-beaver.vercel.app';
+var API_URL = 'https://sakura-pixels.vercel.app';
 
 async function buyItem(type) {
   hapticMedium();
