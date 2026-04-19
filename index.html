@@ -687,16 +687,41 @@ function applyPurchase(type) {
   }
 }
 
-// ── SHARE ──
-function shareGame() {
+// ── REFERRAL ──
+async function shareGame() {
   hapticLight();
-  if (tg && tg.switchInlineQuery) {
-    tg.switchInlineQuery('Play Sakura Pixels with me! 🌸');
-  } else if (navigator.share) {
-    navigator.share({ title: 'Sakura Pixels', text: 'Play this cute nonogram puzzle! 🌸', url: window.location.href });
+  var userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user)
+    ? tg.initDataUnsafe.user.id : 0;
+
+  var link = 'https://t.me/sakurapixelsbot?start=ref_' + userId;
+  var text = '🌸 Играю в Sakura Pixels — крутые нонограммы в Telegram! Заходи по ссылке и мы оба получим +50 монет 🎁';
+
+  if (tg && tg.openTelegramLink) {
+    tg.openTelegramLink('https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent(text));
   } else {
-    showToast('Share link copied! 🌸');
+    navigator.clipboard && navigator.clipboard.writeText(link);
+    showToast('🔗 Ссылка скопирована!');
   }
+}
+
+async function applyRef(refId) {
+  var userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user)
+    ? tg.initDataUnsafe.user.id : 0;
+  if (!userId || !refId) return;
+
+  try {
+    var res = await fetch('https://sakura-pixels.vercel.app/api/ref', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'apply', user_id: userId, ref_id: refId }),
+    });
+    var data = await res.json();
+    if (data.ok) {
+      progress.coins += data.bonus;
+      saveProgress();
+      showToast('🎁 +' + data.bonus + ' монет за приглашение!');
+    }
+  } catch(e) {}
 }
 
 // ── TOAST ──
@@ -1248,6 +1273,14 @@ if(tg && tg.BackButton) {
 loadProgress(function() {
   updatePackBars();
   initAdsgram();
+  // Проверяем реферальный параметр из start_param
+  if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
+    var param = tg.initDataUnsafe.start_param;
+    if (param.indexOf('ref_') === 0) {
+      var refId = param.replace('ref_', '');
+      applyRef(refId);
+    }
+  }
 });
 </script>
 </body>
