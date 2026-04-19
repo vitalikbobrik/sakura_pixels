@@ -172,6 +172,8 @@ body {
 .cell.wrong { background:#FF3355 !important; border-color:transparent; }
 @keyframes cellPop { 0%{transform:scale(0.7)} 60%{transform:scale(1.2)} 100%{transform:scale(1)} }
 .cell.pop { animation:cellPop 0.22s ease forwards; }
+@keyframes cellFlash { 0%{opacity:1} 40%{opacity:0.6} 100%{opacity:1} }
+.cell.flash { animation:cellFlash 0.35s ease forwards; }
 
 .puzzle-footer { padding:0 16px 10px; flex-shrink:0; }
 .prog-label { display:flex; justify-content:space-between; font-size:12px; font-weight:700; color:var(--text-soft); margin-bottom:5px; }
@@ -700,7 +702,7 @@ function useHint() {
 
 // ── ADSGRAM ──
 // Замени 'YOUR_BLOCK_ID' на свой ID из кабинета adsgram.ai
-var ADSGRAM_BLOCK_ID = 'YOUR_BLOCK_ID';
+var ADSGRAM_BLOCK_ID = '28184';
 var adController = null;
 var adPendingReward = null; // { type: 'lives'|'coins', amount: Number }
 var adLevelCount = 0;       // счётчик уровней для авто-показа
@@ -1004,22 +1006,44 @@ function popFx(r,c){
 }
 
 function reAutoX(){
-  var changed=false;
+  // Собираем только те клетки у которых реально изменился autox
+  var toRedraw=[];
   for(var r=0;r<SZ;r++) for(var c=0;c<SZ;c++){
     if(sol[r][c]===1){autox[r][c]=false;continue;}
     if(grid[r][c]===1){autox[r][c]=false;continue;}
     var sh=rowOk(r)||colOk(c);
-    if(sh!==autox[r][c]){autox[r][c]=sh;changed=true;}
+    if(sh!==autox[r][c]){autox[r][c]=sh;toRedraw.push([r,c]);}
   }
-  if(changed){
-    for(var r=0;r<SZ;r++) for(var c=0;c<SZ;c++) renderCell(r,c);
-    for(var r=0;r<SZ;r++) if(rowOk(r)) for(var c=0;c<SZ;c++) if(grid[r][c]===1) flashCell(r,c);
-    for(var c=0;c<SZ;c++) if(colOk(c)) for(var r=0;r<SZ;r++) if(grid[r][c]===1) flashCell(r,c);
+  // Перерисовываем только изменившиеся
+  for(var i=0;i<toRedraw.length;i++) renderCell(toRedraw[i][0],toRedraw[i][1]);
+  // Плавный flash только для новых завершённых строк/столбцов
+  if(toRedraw.length>0){
+    for(var r=0;r<SZ;r++) if(rowOk(r)) flashRow(r);
+    for(var c=0;c<SZ;c++) if(colOk(c)) flashCol(c);
   }
 }
 function rowOk(r){for(var c=0;c<SZ;c++) if(sol[r][c]&&grid[r][c]!==1) return false; return true;}
 function colOk(c){for(var r=0;r<SZ;r++) if(sol[r][c]&&grid[r][c]!==1) return false; return true;}
-function flashCell(r,c){var el=gc(r,c);if(!el)return;el.style.filter='brightness(1.5)';setTimeout(function(){el.style.filter='';},300);}
+
+// Flash только заполненных клеток строки/столбца — через CSS transition, без filter
+function flashRow(r){
+  for(var c=0;c<SZ;c++) if(grid[r][c]===1) flashCell(r,c);
+}
+function flashCol(c){
+  for(var r=0;r<SZ;r++) if(grid[r][c]===1) flashCell(r,c);
+}
+var _flashing={};
+function flashCell(r,c){
+  var key=r+','+c;
+  if(_flashing[key]) return; // уже мигает, не перебиваем
+  var el=gc(r,c); if(!el) return;
+  _flashing[key]=true;
+  el.classList.add('flash');
+  setTimeout(function(){
+    el.classList.remove('flash');
+    delete _flashing[key];
+  },350);
+}
 
 function renderCell(r,c){
   var el=gc(r,c); if(!el) return;
